@@ -28,7 +28,7 @@ class Server {
 
     listen(){
         this.app.listen(process.env.PORT, () => {
-            console.log("Backend en ejecucion en el puerto", process.env.PORT)
+            console.log(process.env.PORT);
         })
     }
 }
