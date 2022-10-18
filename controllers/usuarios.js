@@ -25,4 +25,30 @@ const getUsers = async (req = request, res = response) => {
     }
 }
 
-module.exports = {getUsers}
+const getUserByID = async (req = request, res = response) => {   
+    const {id} = req.params
+    let conn;
+
+    try {
+        conn = await pool.getConnection()
+        const [user] = await conn.query( `SELECT * FROM Usuarios WHERE ID = ${id}`, (error) => { throw new Error(error) })
+
+        if(!user){
+            res.status(404).json({msg:`No se encontraron registro con el ${id}`})
+            return
+        }
+
+        res.json({user})
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({json})
+
+    } finally {
+        if(conn){
+            conn.end()
+        }
+    }
+}
+
+
+module.exports = {getUsers, getUserByID}
