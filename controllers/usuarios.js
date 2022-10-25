@@ -76,4 +76,73 @@ const deleteUserByID = async (req = request, res = response) => {
     }
 }
 
-module.exports = {getUsers, getUserByID, deleteUserByID}
+const addUSer = async (req = request, res = response) => {   
+    const {
+        Nombre,
+        Apellidos,
+        Edad,
+        Genero, 
+        Usuario,
+        Contraseña,
+        Fecha_Nacimiento,
+        Activo
+    } = req.body
+
+    if (
+        !Nombre ||
+        !Apellidos ||
+        !Edad  ||
+        !Usuario ||
+        !Contraseña ||
+        !Activo 
+    ){
+        res.status(400).json({msg: "Falta informacion del usuario"})    
+        return
+    }
+
+    let conn;
+
+    try {
+        conn = await pool.getConnection()
+        
+        const {affecteRows} = await conn.query(`
+            INSERT INTO Usuarios (
+                Nombre,
+                Apellidos,
+                Edad,
+                Genero, 
+                Usuario,
+                Contraseña,
+                Fecha_Nacimiento,
+                Activo
+            ) VALUES (
+                '${Nombre}',
+                '${Apellidos}',
+                 ${Edad},
+                '${Genero}, 
+                '${Usuario},
+                '${Contraseña},
+                '${Fecha_Nacimiento},
+                '${Activo}
+            )
+        ` , (error) => { throw new Error(error) })
+ 
+        console.log(addUSer) 
+        if(affecteRows===0){
+            res.status(404).json({msg:`No se pudo agregar el registro el registro del usuario ${Usuario}`})
+            return
+            }
+            
+        res.json({msg:`El usuario ${Usuario} se agrego satisfactoriamente.`})
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({json})
+
+    } finally {
+        if(conn){
+            conn.end()
+        }
+    }
+}
+
+module.exports = {getUsers, getUserByID, deleteUserByID, addUSer}
