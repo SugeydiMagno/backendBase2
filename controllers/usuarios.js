@@ -84,7 +84,7 @@ const addUSer = async (req = request, res = response) => {
         Genero, 
         Usuario,
         Contraseña,
-        Fecha_Nacimiento,
+        Fecha_Nacimiento = '1900-01-01',
         Activo
     } = req.body
 
@@ -104,6 +104,13 @@ const addUSer = async (req = request, res = response) => {
 
     try {
         conn = await pool.getConnection()
+
+        const [user] = await conn.query(`SELECT Usuario FROM Usuarios WHERE Usuario = '${Usuario}'`)
+
+        if (user){
+            res.status(403).json({msg:`El Usuario '${Usuario}' ya se encuentra registrado `})
+            return
+        }
         
         const {affecteRows} = await conn.query(`
             INSERT INTO Usuarios (
@@ -119,7 +126,7 @@ const addUSer = async (req = request, res = response) => {
                 '${Nombre}',
                 '${Apellidos}',
                  ${Edad},
-                '${Genero}, 
+                '${Genero || ''}', 
                 '${Usuario},
                 '${Contraseña},
                 '${Fecha_Nacimiento},
