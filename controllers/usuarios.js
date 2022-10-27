@@ -152,4 +152,71 @@ const addUSer = async (req = request, res = response) => {
     }
 }
 
-module.exports = {getUsers, getUserByID, deleteUserByID, addUSer}
+const updateUserByeUsuario = async (req = request, res = response) => {   
+    const {
+        Nombre,
+        Apellidos,
+        Edad,
+        Genero, 
+        Usuario,
+        Contraseña,
+        Fecha_Nacimiento = "1900-01-01",
+        Activo
+    } = req.body
+
+    if (
+        !Nombre ||
+        !Apellidos ||
+        !Edad  ||
+        !Usuario ||
+        !Contraseña ||
+        !Activo 
+    ){
+        res.status(400).json({msg: "Falta informacion del usuario"})    
+        return
+    }
+
+    let conn;
+
+    try {
+        conn = await pool.getConnection()
+
+        const [user] = await conn.query(`
+            SELECT Usuario, Nombre, Apellidos, Edad, Genero, Fecha_Nacimiento
+            FROM Usuarios 
+            WHERE Usuario = '${Usuario}'
+        `)
+
+        if (!user){
+            res.status(403).json({msg:`El Usuario '${Usuario}' no se encuentra registrado `})
+            return
+        }
+        
+        const {affecteRows} = await conn.query(`
+            UPDATE Usuarios SET
+                Nombre = '${Nombre || user.Nombre}',
+                Apellidos = '${Apellidos || user.Apellidos}',
+                Edad = ${Edad || user.Edad},
+                Genero = '${Genero || user.Genero }', 
+                Fecha_Nacimiento = '${Fecha_Nacimiento }',
+            WHERE Usuario = ${Usuario}'
+        ` , (error) => { throw new Error(error) })
+ 
+        console.log(addUSer) 
+        if(affecteRows===0){
+            res.status(404).json({msg:`No se pudo actualizarr el registro el registro del usuario ${Usuario}`})
+            return
+            }
+            
+        res.json({msg:`El usuario ${Usuario} se actualizo satisfactoriamente.`})
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({json})
+
+    } finally {
+        if(conn){
+            conn.end()
+        }
+    }
+}
+module.exports = {getUsers, getUserByID, deleteUserByID, addUSer, updateUserByeUsuario}
