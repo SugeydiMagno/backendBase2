@@ -1,4 +1,5 @@
 const { request, response , json } = require("express")
+const bcryptjs = require("bcryptjs")
 const pool = require("../db/conecction")
 
 const getUsers = async (req = request, res = response) => {   
@@ -111,7 +112,10 @@ const addUSer = async (req = request, res = response) => {
             res.status(403).json({msg:`El Usuario '${Usuario}' ya se encuentra registrado `})
             return
         }
-        
+          
+        const salt = bcryptjs.genSaltSync()
+        const ContraseñaCifrada = bcryptjs.hashSync(Contraseña,salt)
+
         const {affecteRows} = await conn.query(`
             INSERT INTO Usuarios (
                 Nombre,
@@ -128,7 +132,7 @@ const addUSer = async (req = request, res = response) => {
                  ${Edad},
                 '${Genero || ''}', 
                 '${Usuario},
-                '${Contraseña},
+                '${ContraseñaCifrada},
                 '${Fecha_Nacimiento},
                 '${Activo}
             )
@@ -219,4 +223,51 @@ const updateUserByeUsuario = async (req = request, res = response) => {
         }
     }
 }
-module.exports = {getUsers, getUserByID, deleteUserByID, addUSer, updateUserByeUsuario}
+
+const sigIn = async (req = request, res = response) => {   
+    const { 
+        Usuario,
+        Contraseña
+    } = req.body
+
+    if (
+        !Usuario ||
+        !Contraseña 
+    ){
+        res.status(400).json({msg: "Falta informacion del usuario"})    
+        return
+    }
+
+    let conn;
+
+    try {
+        conn = await pool.getConnection()
+
+        const [user] = await conn.query(`SELECT Usuario, Contraseña , Activo FROM Usuarios WHERE Usuario = '${Usuario}'`)
+
+        if (!user || user.Activo === 'N'){
+            res.status(403).json({msg:`El Usuario o la Contraseña son incorrectos.`})
+            return
+        }
+
+        const accesoValido = bcryptjs.compareSync(Contraseña, user.Contraseña )
+
+        if (!accesoValido){
+            res.status(403).json({msg:`El Usuario o la Contraseña son incorrectos.`})
+            return
+        }
+
+        res.json({msg:`El usuario ${Usuario} ha iniciado sesion satisfactoriamente.`})
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({json})
+
+    } finally {
+        if(conn){
+            conn.end()
+        }
+    }
+}
+
+
+module.exports = {getUsers, getUserByID, deleteUserByID, addUSer, updateUserByeUsuario, sigIn}
