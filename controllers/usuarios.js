@@ -1,6 +1,7 @@
 const { request, response , json } = require("express")
 const bcryptjs = require("bcryptjs")
-const pool = require("../db/conecction")
+const pool = require("../db/conecction");
+const modeloUsuarios = require("../models/usuarios");
 
 const getUsers = async (req = request, res = response) => {   
     let conn;
@@ -116,27 +117,16 @@ const addUSer = async (req = request, res = response) => {
         const salt = bcryptjs.genSaltSync()
         const ContraseñaCifrada = bcryptjs.hashSync(Contraseña,salt)
 
-        const {affecteRows} = await conn.query(`
-            INSERT INTO Usuarios (
+        const {affecteRows} = await conn.query(modeloUsuarios.queryAddUser,[
                 Nombre,
                 Apellidos,
                 Edad,
-                Genero, 
+                Genero || '', 
                 Usuario,
                 Contraseña,
                 Fecha_Nacimiento,
                 Activo
-            ) VALUES (
-                '${Nombre}',
-                '${Apellidos}',
-                 ${Edad},
-                '${Genero || ''}', 
-                '${Usuario},
-                '${ContraseñaCifrada},
-                '${Fecha_Nacimiento},
-                '${Activo}
-            )
-        ` , (error) => { throw new Error(error) })
+            ], (error) => { throw new Error(error) })
  
         console.log(addUSer) 
         if(affecteRows===0){
@@ -197,13 +187,7 @@ const updateUserByeUsuario = async (req = request, res = response) => {
         }
         
         const {affecteRows} = await conn.query(`
-            UPDATE Usuarios SET
-                Nombre = '${Nombre || user.Nombre}',
-                Apellidos = '${Apellidos || user.Apellidos}',
-                Edad = ${Edad || user.Edad},
-                Genero = '${Genero || user.Genero }', 
-                Fecha_Nacimiento = '${Fecha_Nacimiento }',
-            WHERE Usuario = ${Usuario}'
+        
         ` , (error) => { throw new Error(error) })
  
         console.log(addUSer) 
@@ -268,6 +252,64 @@ const sigIn = async (req = request, res = response) => {
         }
     }
 }
+ 
+const newContraseña = async (req = request, res = response) => {   
+    const { 
+        Usuario,
+        AntContraseña,
+        NuevContraseña
+    } = req.body
 
+    if (
+        !Usuario ||
+        !AntContraseña ||
+        !NuevContraseña
+    ){
+        res.status(400).json({msg: "Falta informacion "})    
+        return
+    }
 
-module.exports = {getUsers, getUserByID, deleteUserByID, addUSer, updateUserByeUsuario, sigIn}
+    let conn;
+
+    try {
+        conn = await pool.getConnection()
+
+        const [user] = await conn.query(`SELECT Usuario, Contraseña , Activo FROM Usuarios WHERE Usuario = '${Usuario}'`)
+
+        if (!user || user.Activo === 'N'){
+            res.status(403).json({msg:`El Usuario o la Contraseña son incorrectos.`})
+            return
+        }
+
+        const datosValidos = bcryptjs.compareSync(AntContraseña, user.Contraseña )
+
+        if (!datosValidos){
+            res.status(403).json({msg:`El Usuario o la Contraseña son incorrectos.`})
+            return
+        }
+
+        const salt = bcryptjs.genSaltSync()
+        const ContraseñaCifrada = bcryptjs.hashSync(NuevContraseña,salt)
+
+        const {affecteRows} = await console.query (`
+            UPDATE Usuarios SET
+                Contraseña='${ContraseñaCifrada}'
+            WHERE Usuario='${Usuario}'
+            `,(error) => {throw new error })
+        if(affecteRows===0){
+            res.status(404).json({msg:`Error al actualizar la contraseña de ${Usuario}`})
+            return
+        }
+        res.json({msg:`La contraseña de  ${Usuario} se actualizo satisfactoriamente .`})
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({error})
+    } finally {
+        if(conn){
+            conn.end()
+        }
+    }
+}
+ 
+
+module.exports = {getUsers, getUserByID, deleteUserByID, addUSer, updateUserByeUsuario, sigIn, newContraseña}
