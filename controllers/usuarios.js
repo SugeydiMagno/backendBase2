@@ -154,8 +154,7 @@ const updateUserByeUsuario = async (req = request, res = response) => {
         Genero, 
         Usuario,
         Contraseña,
-        Fecha_Nacimiento = "1900-01-01",
-        Activo
+        Fecha_Nacimiento = "1900-01-01"
     } = req.body
 
     if (
@@ -163,9 +162,9 @@ const updateUserByeUsuario = async (req = request, res = response) => {
         !Apellidos ||
         !Edad  ||
         !Usuario ||
-        !Contraseña ||
-        !Activo 
-    ){
+        !Contraseña  
+    ) 
+    {
         res.status(400).json({msg: "Falta informacion del usuario"})    
         return
     }
@@ -175,20 +174,21 @@ const updateUserByeUsuario = async (req = request, res = response) => {
     try {
         conn = await pool.getConnection()
 
-        const [user] = await conn.query(`
-            SELECT Usuario, Nombre, Apellidos, Edad, Genero, Fecha_Nacimiento
-            FROM Usuarios 
-            WHERE Usuario = '${Usuario}'
-        `)
+        const [user] = await conn.query(modeloUsuarios.queryGetUserInfo, [Usuario])
 
         if (!user){
             res.status(403).json({msg:`El Usuario '${Usuario}' no se encuentra registrado `})
             return
         }
         
-        const {affecteRows} = await conn.query(`
-        
-        ` , (error) => { throw new Error(error) })
+        const {affecteRows} = await conn.query(modeloUsuarios.queryUpdateByUsuario,[
+            Nombre || user.Nombre,
+            Apellidos || user.Apellidos,
+            Edad || user.Edad
+            Genero || user.Genero 
+            Fecha_Nacimiento,
+            Usuario
+        ], (error) => { throw new Error(error) })
  
         console.log(addUSer) 
         if(affecteRows===0){
