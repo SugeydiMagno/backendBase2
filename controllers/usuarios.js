@@ -184,8 +184,8 @@ const updateUserByeUsuario = async (req = request, res = response) => {
         const {affecteRows} = await conn.query(modeloUsuarios.queryUpdateByUsuario,[
             Nombre || user.Nombre,
             Apellidos || user.Apellidos,
-            Edad || user.Edad
-            Genero || user.Genero 
+            Edad || user.Edad,
+            Genero || user.Genero ,
             Fecha_Nacimiento,
             Usuario
         ], (error) => { throw new Error(error) })
