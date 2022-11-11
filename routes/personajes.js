@@ -1,5 +1,5 @@
 const {Router} = require("express")
-const { getPersonaje } = require("../controllers/personajes")
+const { getPersonaje, getPersonajesByID, deletePersonajesByID, addPersonaje, updatePersonajeByePersonaje } = require("../controllers/personajes")
 const {} = require ("../controllers/Personaje")
 const router = Router()
 
@@ -8,3 +8,15 @@ const router = Router()
 //GET ///
 
 router.get("/", getPersonaje)
+router.get("/id/:id", getPersonajesByID)
+
+//DELETE//
+
+router.delete("/" , deletePersonajesByID)
+
+//POST//
+
+router.post("/", addPersonaje)
+
+//PUT//
+router.put("/", updatePersonajeByePersonaje)
